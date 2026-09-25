@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Şifre Oluşturucu — Minimal</title>
+<style>
+  :root{
+    --bg:#050507;
+    --card:rgba(255,255,255,.06);
+    --card-border:rgba(255,255,255,.12);
+    --text:#f5f5f5;
+    --muted:#a1a1aa;
+    --accent:#ffffff;
+    --radius:20px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    background:var(--bg);color:var(--text);
+    min-height:100vh;overflow-x:hidden;
+  }
+  #stars{position:fixed;inset:0;z-index:0}
+  .glow{position:fixed;width:600px;height:600px;border-radius:50%;filter:blur(140px);opacity:.14;z-index:0;pointer-events:none}
+  .glow.g1{background:#fff;top:-150px;left:-150px}
+  .glow.g2{background:#71717a;bottom:-200px;right:-150px}
+  .wrap{position:relative;z-index:1;max-width:1080px;margin:0 auto;padding:40px 20px 60px}
+  header{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px}
+  .logo{display:flex;align-items:center;gap:12px}
+  .logo-mark{width:40px;height:40px;border-radius:12px;background:#fff;color:#000;display:grid;place-items:center;font-weight:900;font-size:20px}
+  .logo h1{font-size:20px;letter-spacing:-.02em}
+  .logo p{font-size:12px;color:var(--muted)}
+  .badge{font-size:12px;color:#000;background:#fff;border-radius:999px;padding:6px 12px;font-weight:700}
+  .grid{display:grid;grid-template-columns:1.1fr .9fr;gap:20px}
+  @media(max-width:860px){.grid{grid-template-columns:1fr}}
+  .card{
+    background:var(--card);border:1px solid var(--card-border);
+    border-radius:var(--radius);padding:24px;
+    backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+    box-shadow:0 20px 60px rgba(0,0,0,.5);
+  }
+  .card h2{font-size:15px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin-bottom:16px}
+  .pw-box{
+    display:flex;align-items:center;gap:10px;
+    background:#0a0a0d;border:1px solid rgba(255,255,255,.15);
+    border-radius:14px;padding:14px;
+  }
+  #password{
+    flex:1;background:transparent;border:0;outline:0;color:#fff;
+    font-family:ui-monospace,Consolas,monospace;font-size:18px;letter-spacing:.04em;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  }
+  #password.hidden{filter:blur(7px);user-select:none}
+  .icon-btn{
+    width:38px;height:38px;border-radius:10px;border:1px solid rgba(255,255,255,.15);
+    background:rgba(255,255,255,.06);color:#fff;cursor:pointer;font-size:17px;
+    display:grid;place-items:center;transition:.2s;
+  }
+  .icon-btn:hover{background:#fff;color:#000}
+  .row{display:flex;align-items:center;justify-content:space-between;margin:18px 0 8px}
+  .row label{font-size:14px}
+  #lenVal{background:#fff;color:#000;font-weight:800;border-radius:8px;padding:2px 10px;font-size:14px}
+  input[type=range]{width:100%;accent-color:#fff;cursor:pointer;margin:8px 0 4px}
+  .scale{display:flex;justify-content:space-between;font-size:11px;color:var(--muted)}
+  .checks{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0}
+  .check{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:10px 12px;font-size:13px;cursor:pointer}
+  .check input{accent-color:#fff;width:16px;height:16px;cursor:pointer}
+  .strength{height:6px;background:rgba(255,255,255,.1);border-radius:999px;overflow:hidden;margin:6px 0 4px}
+  #strengthBar{height:100%;width:0%;background:#fff;transition:.3s}
+  #strengthText{font-size:12px;color:var(--muted)}
+  .btns{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}
+  .btn{flex:1;min-width:120px;border-radius:12px;padding:13px;font-weight:800;font-size:14px;cursor:pointer;border:1px solid #fff;transition:.2s}
+  .btn.primary{background:#fff;color:#000}
+  .btn.primary:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(255,255,255,.25)}
+  .btn.ghost{background:transparent;color:#fff}
+  .btn.ghost:hover{background:rgba(255,255,255,.1)}
+  .save-row{display:flex;gap:10px;margin-top:10px}
+  #saveName{flex:1;background:#0a0a0d;border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:12px;color:#fff;outline:0}
+  #saveName:focus{border-color:#fff}
+  #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:#fff;color:#000;font-weight:700;font-size:13px;padding:10px 18px;border-radius:999px;opacity:0;transition:.3s;z-index:10}
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .saved-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+  .saved-head h2{margin:0}
+  #count{font-size:12px;background:rgba(255,255,255,.1);padding:4px 10px;border-radius:999px}
+  #savedList{display:flex;flex-direction:column;gap:10px;max-height:520px;overflow:auto}
+  .saved-item{background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:12px}
+  .saved-top{display:flex;align-items:center;gap:8px}
+  .saved-name{flex:1;background:transparent;border:0;outline:0;color:#fff;font-weight:700;font-size:14px;border-bottom:1px dashed transparent}
+  .saved-name:focus{border-bottom-color:#fff}
+  .saved-pw{font-family:ui-monospace,monospace;font-size:13px;color:#d4d4d8;margin:8px 0;word-break:break-all}
+  .saved-pw.masked{filter:blur(5px);user-select:none}
+  .saved-actions{display:flex;gap:6px}
+  .mini{font-size:12px;border-radius:8px;padding:6px 10px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.06);color:#fff;cursor:pointer}
+  .mini:hover{background:#fff;color:#000}
+  .mini.danger:hover{background:#ef4444;border-color:#ef4444;color:#fff}
+  .empty{text-align:center;color:var(--muted);font-size:13px;padding:30px 10px;border:1px dashed rgba(255,255,255,.15);border-radius:14px}
+  footer{text-align:center;color:var(--muted);font-size:12px;margin-top:26px}
+</style>
+</head>
+<body>
+<canvas id="stars"></canvas>
+<div class="glow g1"></div>
+<div class="glow g2"></div>
+
+<div class="wrap">
+  <header>
+    <div class="logo">
+      <div class="logo-mark">✦</div>
+      <div>
+        <h1>Şifre Oluşturucu</h1>
+        <p>minimal • modern • siyah beyaz</p>
+      </div>
+    </div>
+    <div class="badge" id="totalBadge">0 kayıt</div>
+  </header>
+
+  <div class="grid">
+    <div class="card">
+      <h2>✦ Yeni Şifre</h2>
+      <div class="pw-box">
+        <input id="password" readonly value="••••••••••••••" class="hidden" />
+        <button class="icon-btn" id="toggleBtn" title="Gizle / Göster">👁</button>
+        <button class="icon-btn" id="copyBtn" title="Kopyala">⧉</button>
+      </div>
+
+      <div class="row">
+        <label>Uzunluk</label>
+        <span id="lenVal">14</span>
+      </div>
+      <input type="range" id="length" min="8" max="32" value="14" />
+      <div class="scale"><span>8 — kısa</span><span>14 — orta</span><span>32 — uzun</span></div>
+
+      <div class="checks">
+        <label class="check"><input type="checkbox" id="upper" checked /> Büyük Harf (A-Z)</label>
+        <label class="check"><input type="checkbox" id="lower" checked /> Küçük Harf (a-z)</label>
+        <label class="check"><input type="checkbox" id="numbers" checked /> Rakam (0-9)</label>
+        <label class="check"><input type="checkbox" id="symbols" checked /> Sembol (!@#…)</label>
+      </div>
+
+      <div class="strength"><div id="strengthBar"></div></div>
+      <div id="strengthText">Oluştur'a bas ve gücünü gör</div>
+
+      <div class="btns">
+        <button class="btn primary" id="generateBtn">⟳ Oluştur</button>
+        <button class="btn ghost" id="copyBtn2">Kopyala</button>
+      </div>
+      <div class="save-row">
+        <input id="saveName" placeholder="İsim ver… örn: Gmail" maxlength="30" />
+        <button class="btn primary" id="saveBtn" style="flex:0 0 130px">＋ Kaydet</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="saved-head">
+        <h2>★ Kaydedilenler</h2>
+        <span id="count">0</span>
+      </div>
+      <div id="savedList"></div>
+    </div>
+  </div>
+
+  <footer>Şifreler yalnızca bu tarayıcıda (localStorage) saklanır • kimseyle paylaşılmaz ✦</footer>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const $ = id => document.getElementById(id);
+const pwEl = $('password'), lenEl = $('length'), lenVal = $('lenVal');
+const KEY = 'sifre-olusturucu-kayitlar-v1';
+let hidden = true;
+let lastPassword = '';
+
+function toast(msg){
+  const t = $('toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(t._h); t._h = setTimeout(()=>t.classList.remove('show'), 1800);
+}
+
+function buildCharset(){
+  let s = '';
+  if($('upper').checked) s += 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  if($('lower').checked) s += 'abcdefghijklmnopqrstuvwxyz';
+  if($('numbers').checked) s += '0123456789';
+  if($('symbols').checked) s += '!@#$%^&*()-_=+[]{};:,.<>?/~';
+  return s;
+}
+
+function generate(){
+  const charset = buildCharset();
+  if(!charset){ toast('En az bir karakter türü seç'); return; }
+  const len = +lenEl.value;
+  const buf = new Uint32Array(len);
+  crypto.getRandomValues(buf);
+  let pw = '';
+  for(let i=0;i<len;i++) pw += charset[buf[i] % charset.length];
+  lastPassword = pw;
+  pwEl.value = pw;
+  updateStrength(pw);
+  if(hidden){ /* gizli kalsın, blur devam */ }
+}
+
+function updateStrength(pw){
+  let score = 0;
+  if(pw.length >= 12) score += 25;
+  if(pw.length >= 16) score += 15;
+  if(/[A-Z]/.test(pw)) score += 15;
+  if(/[a-z]/.test(pw)) score += 15;
+  if(/[0-9]/.test(pw)) score += 15;
+  if(/[^A-Za-z0-9]/.test(pw)) score += 15;
+  score = Math.min(score, 100);
+  $('strengthBar').style.width = score + '%';
+  $('strengthText').textContent =
+    score < 40 ? 'Zayıf — uzunluğu artır' :
+    score < 70 ? 'Orta — gayet iyi' : 'Güçlü ✦ harika';
+}
+
+function setHidden(v){
+  hidden = v;
+  pwEl.classList.toggle('hidden', hidden);
+  $('toggleBtn').textContent = hidden ? '👁' : '🙈';
+}
+
+function copyText(txt){
+  if(!txt || /•/.test(txt)){ toast('Önce şifre oluştur'); return; }
+  navigator.clipboard.writeText(txt).then(()=>toast('Kopyalandı ✦')).catch(()=>toast('Kopyalanamadı'));
+}
+
+function load(){ try{ return JSON.parse(localStorage.getItem(KEY)) || []; }catch{ return []; } }
+function store(list){ localStorage.setItem(KEY, JSON.stringify(list)); }
+
+function render(){
+  const list = load();
+  const box = $('savedList');
+  $('count').textContent = list.length;
+  $('totalBadge').textContent = list.length + ' kayıt';
+  if(!list.length){
+    box.innerHTML = '<div class="empty">Henüz kayıt yok.<br>Şifre oluştur → isim ver → Kaydet ✦</div>';
+    return;
+  }
+  box.innerHTML = '';
+  list.forEach((item, idx) => {
+    const div = document.createElement('div');
+    div.className = 'saved-item';
+    div.innerHTML =
+      '<div class="saved-top">' +
+        '<input class="saved-name" value="" maxlength="30" />' +
+        '<div class="saved-actions">' +
+          '<button class="mini" data-a="toggle">👁</button>' +
+          '<button class="mini" data-a="copy">⧉</button>' +
+          '<button class="mini danger" data-a="del">✕</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="saved-pw masked"></div>' +
+      '<div style="font-size:11px;color:#71717a">' + item.date + ' • ' + item.pw.length + ' karakter</div>';
+    div.querySelector('.saved-name').value = item.name;
+    div.querySelector('.saved-pw').textContent = item.pw;
+    div.querySelector('.saved-name').addEventListener('change', e => {
+      const l = load(); l[idx].name = e.target.value || 'İsimsiz'; store(l); render(); toast('İsim güncellendi');
+    });
+    div.querySelector('[data-a=toggle]').onclick = ev => {
+      const p = div.querySelector('.saved-pw');
+      p.classList.toggle('masked');
+      ev.target.textContent = p.classList.contains('masked') ? '👁' : '🙈';
+    };
+    div.querySelector('[data-a=copy]').onclick = () => copyText(item.pw);
+    div.querySelector('[data-a=del]').onclick = () => {
+      const l = load(); l.splice(idx,1); store(l); render(); toast('Silindi');
+    };
+    div.querySelector('.saved-pw').onclick = () => copyText(item.pw);
+    box.appendChild(div);
+  });
+}
+
+$('generateBtn').onclick = generate;
+$('toggleBtn').onclick = () => setHidden(!hidden);
+$('copyBtn').onclick = () => copyText(pwEl.value);
+$('copyBtn2').onclick = () => copyText(pwEl.value);
+lenEl.oninput = () => { lenVal.textContent = lenEl.value; };
+$('saveBtn').onclick = () => {
+  if(!lastPassword || /•/.test(pwEl.value)){ toast('Önce şifre oluştur'); return; }
+  const name = $('saveName').value.trim() || ('Şifrem ' + (load().length + 1));
+  const list = load();
+  list.unshift({ name, pw: lastPassword, date: new Date().toLocaleString('tr-TR') });
+  store(list); $('saveName').value = ''; render(); toast('Kaydedildi ★');
+};
+
+/* Yıldızlar */
+const cv = $('stars'), ctx = cv.getContext('2d');
+let stars = [], shooting = null;
+function resize(){
+  cv.width = innerWidth; cv.height = innerHeight;
+  stars = Array.from({length: Math.min(220, innerWidth/5)}, () => ({
+    x: Math.random()*cv.width, y: Math.random()*cv.height,
+    r: Math.random()*1.6+.3, p: Math.random()*Math.PI*2, s:.01+Math.random()*.03
+  }));
+}
+addEventListener('resize', resize); resize();
+setInterval(()=>{ if(!shooting && Math.random()<.25) shooting = {x:Math.random()*cv.width*.8, y:Math.random()*200, vx:7, vy:3, life:1}; }, 3000);
+(function loop(){
+  ctx.clearRect(0,0,cv.width,cv.height);
+  for(const st of stars){
+    st.p += st.s;
+    const a = .35 + Math.abs(Math.sin(st.p))*.65;
+    ctx.globalAlpha = a; ctx.fillStyle = '#fff';
+    ctx.beginPath(); ctx.arc(st.x, st.y, st.r, 0, 7); ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+  if(shooting){
+    shooting.x += shooting.vx; shooting.y += shooting.vy; shooting.life -= .02;
+    const g = ctx.createLinearGradient(shooting.x, shooting.y, shooting.x-80, shooting.y-35);
+    g.addColorStop(0,'rgba(255,255,255,.9)'); g.addColorStop(1,'rgba(255,255,255,0)');
+    ctx.strokeStyle = g; ctx.lineWidth = 2; ctx.beginPath();
+    ctx.moveTo(shooting.x, shooting.y); ctx.lineTo(shooting.x-80, shooting.y-35); ctx.stroke();
+    if(shooting.life<=0) shooting = null;
+  }
+  requestAnimationFrame(loop);
+})();
+
+render();
+generate();
+setHidden(true);
+</script>
+</body>
+</html>
